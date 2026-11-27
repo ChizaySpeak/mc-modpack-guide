@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Гайд по нашей сборке Minecraft (NeoForge 1.21.1)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg-main: #0c0517;
+      --bg-card: #170b2c;
+      --bg-card-alt: #120722;
+      --border-main: #2b144d;
+      --neon-pink: #f000ff;
+      --neon-purple: #a855f7;
+      --neon-orange: #ff6b00;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-main);
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-image:
+        radial-gradient(circle at 15% 10%, rgba(240, 0, 255, 0.14), transparent 36%),
+        radial-gradient(circle at 85% 12%, rgba(255, 107, 0, 0.14), transparent 38%),
+        radial-gradient(circle at 50% 85%, rgba(168, 85, 247, 0.11), transparent 45%);
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .neon-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-main);
+      box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.7), 0 0 18px -8px rgba(240, 0, 255, 0.25);
+    }
+
+    .neon-card-alt {
+      background-color: var(--bg-card-alt);
+      border: 1px solid var(--border-main);
+    }
+
+    .neon-card-orange {
+      background: linear-gradient(135deg, rgba(255, 107, 0, 0.15), rgba(23, 11, 44, 0.96) 55%, rgba(240, 0, 255, 0.12));
+      border: 1px solid rgba(255, 107, 0, 0.5);
+      box-shadow: 0 0 26px -6px rgba(255, 107, 0, 0.38);
+    }
+
+    .neon-active-btn {
+      background: linear-gradient(90deg, #d946ef, #ff6b00);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(240, 0, 255, 0.45);
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-fuchsia-500 selection:text-white">
+  <div id="app" class="max-w-4xl mx-auto px-4 py-6 space-y-6"></div>
+
+  <script>
+    (function () {
+      const TOTAL_MODS_COUNT = 163;
+
+      const MOD_ITEMS = [
+        // Магия
+        {
+          name: "Ars Nouveau",
+          section: "Магия",
+          category: "Магия",
+          refine: false,
+          whatItDoes: "Вы собираете собственные заклинания из символов-глифов. Есть ритуалы, магическая броня и помощники для автоматизации.",
+          howToStart: "Скрафтите Worn Notebook (книга + 1 лазурит): это внутриигровой учебник.",
+          wikiLabel: "arsnouveau.wiki",
+          wikiUrl: "https://arsnouveau.wiki/"
+        },
+        {
+          name: "Iron's Spells 'n Spellbooks",
+          section: "Магия",
+          category: "Магия",
+          refine: false,
+          whatItDoes: "Классическая RPG-магия: готовые заклинания по школам, мана, перезарядка, маги-враги и данжи.",
+          howToStart: "Найдите свиток: он расходуется при касте. Из книги заклинаний касты тратят ману и перезаряжаются.",
+          wikiLabel: "iron.wiki",
+          wikiUrl: "https://iron.wiki/"
+        },
+        {
+          name: "Ars 'n' Spells",
+          section: "Магия",
+          category: "Магия",
+          refine: false,
+          whatItDoes: "Мостик между двумя модами выше: объединяет работу маны и бонусов снаряжения, позволяет переносить заклинания Ars в книги Iron's. Правила зависят от настроек.",
+          howToStart: "Изучать после основ обоих модов.",
+          wikiLabel: "arsnouveau.wiki",
+          wikiUrl: "https://arsnouveau.wiki/"
+        },
+        {
+          name: "Occultism",
+          section: "Магия",
+          category: "Магия",
+          refine: false,
+          whatItDoes: "Призыв духов через ритуалы. Духи добывают ресурсы, переносят предметы и работают за вас, есть магическое хранилище.",
+          howToStart: "Найдите в JEI книгу Dictionary of Spirits и идите по ней.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Malum",
+          section: "Магия",
+          category: "Магия",
+          refine: false,
+          whatItDoes: "Тёмная магия: вы собираете духи из убитых мобов и делаете из них артефакты и снаряжение.",
+          howToStart: "Откройте книгу мода (Encyclopedia Arcana). Для сбора духов нужна коса.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Hogwartscraft by Michelle",
+          section: "Магия",
+          category: "Магия",
+          refine: true,
+          whatItDoes: "Магия в духе «Гарри Поттера» (уточнить): точную страницу этой версии найти не удалось, поэтому палочки и мётлы не гарантируются.",
+          howToStart: "Поиск @hogwarts в JEI покажет все предметы мода.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Mo' Enchantments + Loot Compat",
+          section: "Магия",
+          category: "Магия",
+          refine: false,
+          whatItDoes: "Новые зачарования; второй файл добавляет их в лут.",
+          howToStart: "Смотрите стол зачарований, книги и сундуки.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Relics",
+          section: "Магия",
+          category: "Магия",
+          refine: false,
+          whatItDoes: "Особые артефакты со способностями, которые прокачиваются по мере использования.",
+          howToStart: "Ищите в сундуках и надевайте в слоты аксессуаров.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Artifacts",
+          section: "Магия",
+          category: "Магия",
+          refine: false,
+          whatItDoes: "Редкие аксессуары с полезными эффектами.",
+          howToStart: "Ищите в подземных сундуках и у мимиков.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+
+        // Техника, механизмы, корабли и поезда
+        {
+          name: "Create",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: false,
+          whatItDoes: "Конвейеры, дробилки, прессы, движущиеся конструкции, поезда. Механизмы работают от вращения валов и шестерёнок.",
+          howToStart: "Начинать лучше с водяного колеса и андезитового сплава. Наведите на предмет в инвентаре и удерживайте W: откроется анимированная подсказка Ponder.",
+          wikiLabel: "wiki.createmod.net",
+          wikiUrl: "https://wiki.createmod.net/"
+        },
+        {
+          name: "Create Crafts & Additions (createaddition)",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: false,
+          whatItDoes: "Добавляет в Create электричество: преобразует вращение в энергию и обратно.",
+          howToStart: "После основ Create.",
+          wikiLabel: "wiki.createmod.net",
+          wikiUrl: "https://wiki.createmod.net/"
+        },
+        {
+          name: "Create: Copycats+",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: false,
+          whatItDoes: "Блоки, принимающие вид других материалов, для красивых механизмов.",
+          howToStart: "Поставьте блок и кликните по нему материалом.",
+          wikiLabel: "wiki.createmod.net",
+          wikiUrl: "https://wiki.createmod.net/"
+        },
+        {
+          name: "Create: Steam 'n' Rails (railways, неофициальный порт)",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: false,
+          whatItDoes: "Расширяет поезда Create: новые рельсы, детали и оформление.",
+          howToStart: "Сначала постройте обычный поезд Create.",
+          wikiLabel: "wiki.createmod.net",
+          wikiUrl: "https://wiki.createmod.net/"
+        },
+        {
+          name: "Create: Slice & Dice",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: false,
+          whatItDoes: "Автоматизирует готовку Farmer's Delight механизмами Create.",
+          howToStart: "Найдите Slicer в JEI.",
+          wikiLabel: "wiki.createmod.net",
+          wikiUrl: "https://wiki.createmod.net/"
+        },
+        {
+          name: "Railhold",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: true,
+          whatItDoes: "Судя по названию, связан с железной дорогой (уточнить).",
+          howToStart: "Проверьте предметы по @railhold в JEI.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Valkyrien Skies 2.0 (неофициальный)",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: true,
+          whatItDoes: "Физика для построек из блоков: они превращаются в движущиеся корабли (вместе с Sable стоит протестировать корабли; об ошибках неофициальных портов не пишите оригинальным авторам).",
+          howToStart: "Используется вместе с Eureka. Перед большой постройкой сделайте копию мира и маленький тестовый корабль.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Eureka 2.0 (неофициальный)",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: true,
+          whatItDoes: "Штурвал: собирает вашу постройку в управляемый корабль или дирижабль.",
+          howToStart: "Постройте корпус, поставьте штурвал и соберите судно через его меню (перед большой постройкой сделайте копию мира и маленький тестовый корабль).",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Sable",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: true,
+          whatItDoes: "Другой физический движок для подвижных конструкций. Служебная основа для других модов.",
+          howToStart: "Отдельно изучать не нужно.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Sable: Ships",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: true,
+          whatItDoes: "Постройка своих кораблей на физике Sable, управление настраивается.",
+          howToStart: "Проверьте предметы мода в JEI; перед большой постройкой сделайте копию мира и маленький тестовый корабль.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Small Ships",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: true,
+          whatItDoes: "Готовые парусные корабли с местами для экипажа и грузом. Самый простой способ выйти в море.",
+          howToStart: "Поставьте верфь (Dockyard) у широкой и глубокой воды, нажмите по ней ПКМ, выберите корабль и дерево. Материалы берутся из инвентаря. Так сказано на текущей странице мода, проверьте в игре.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Small Ships: Viking Addon",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: true,
+          whatItDoes: "Корабли в стиле викингов.",
+          howToStart: "Так же, как Small Ships (верфь Dockyard у воды, выбор корабля и дерева, проверка в игре).",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Astikor Carts Redux",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: false,
+          whatItDoes: "Повозки: груз, плуг, которые тянут животные или игрок.",
+          howToStart: "Скрафтите колесо и повозку.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Ad Astra",
+          section: "Техника, механизмы, корабли и поезда",
+          category: "Техника, корабли и поезда",
+          refine: false,
+          whatItDoes: "Космос: ракеты, топливо, скафандры, планеты.",
+          howToStart: "Позднее развитие: найдите в JEI NASA Workbench. Без скафандра и кислорода в космос не летите.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+
+        // Мир, измерения, структуры, сезоны
+        {
+          name: "Terralith",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: false,
+          whatItDoes: "Много новых и красивых биомов обычного мира.",
+          howToStart: "Просто исследуйте.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Tectonic",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: false,
+          whatItDoes: "Более крупный рельеф: горные цепи, долины, материки.",
+          howToStart: "Берите еду и камни телепортации в дальние походы.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "The Twilight Forest",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: false,
+          whatItDoes: "Сумеречный лес: отдельное измерение с боссами по порядку.",
+          howToStart: "Классический портал: яма с водой 2×2 на земле, вокруг цветы, бросить алмаз. Не прыгайте в него без снаряжения.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Deeper and Darker",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: false,
+          whatItDoes: "Расширяет Deep Dark и добавляет новое тёмное измерение.",
+          howToStart: "Поздняя игра: путь идёт через Древний город и Вардена.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "When Dungeons Arise",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: false,
+          whatItDoes: "Огромные замки, башни, корабли и крепости с лутом и врагами.",
+          howToStart: "Идите группой.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Lootr",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: false,
+          whatItDoes: "Лут в найденных сундуках у каждого игрока свой.",
+          howToStart: "Не ломайте такие сундуки: другим тоже нужен лут.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Serene Seasons",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: false,
+          whatItDoes: "Времена года: меняются цвета, погода и рост культур.",
+          howToStart: "Не все растения растут в любой сезон. Календарь покажет, какой сезон сейчас.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Serene Seasons Plus",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: true,
+          whatItDoes: "Дополнение к сезонам; точный набор функций (уточнить).",
+          howToStart: "Изменения будут заметны в течение года.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Seasons Fix",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: false,
+          whatItDoes: "Исправления для работы сезонов.",
+          howToStart: "Отдельных действий не требует.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Vanilla Backport",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: false,
+          whatItDoes: "Переносит в 1.21.1 новинки более новых версий Minecraft. Функции можно отключать в настройках.",
+          howToStart: "Незнакомый блок может быть и из новой ванильной игры.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "VB Extras (vbextras)",
+          section: "Мир, измерения, структуры, сезоны",
+          category: "Мир и сезоны",
+          refine: true,
+          whatItDoes: "Вероятно, дополнение к Vanilla Backport (уточнить).",
+          howToStart: "Смотрите @vbextras в JEI.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+
+        // Монстры и сложность
+        {
+          name: "Zombie Apocalypse Addon",
+          section: "Монстры и сложность",
+          category: "Монстры и сложность",
+          refine: false,
+          whatItDoes: "Зомби-орды, кровавые луны, рост сложности по дням. Ломание и ставка блоков зомби по умолчанию выключены.",
+          howToStart: "Команда /za показывает текущее состояние. Если друзьям тяжело, начните с пресета /za preset casual (нужны права оператора; сверьтесь с /za).",
+          wikiLabel: "GitHub Wiki",
+          wikiUrl: "https://github.com/"
+        },
+        {
+          name: "Born in Chaos",
+          section: "Монстры и сложность",
+          category: "Монстры и сложность",
+          refine: false,
+          whatItDoes: "Множество новых мрачных монстров, мини-боссы, предметы с них.",
+          howToStart: "Не ходите далеко без брони и еды.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "The Graveyard",
+          section: "Монстры и сложность",
+          category: "Монстры и сложность",
+          refine: false,
+          whatItDoes: "Кладбища, склепы и нежить.",
+          howToStart: "Не ходите далеко без брони и еды; заходите в склепы и на кладбища подготовленными.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Cave Dweller",
+          section: "Монстры и сложность",
+          category: "Монстры и сложность",
+          refine: false,
+          whatItDoes: "Жуткое существо, которое охотится на игроков в пещерах.",
+          howToStart: "Держите места освещёнными и не спускайтесь в пещеры без брони и еды.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Eyes in the Darkness",
+          section: "Монстры и сложность",
+          category: "Монстры и сложность",
+          refine: false,
+          whatItDoes: "Глаза в темноте: хоррор-атмосфера.",
+          howToStart: "Держите места освещёнными.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Improved Mobs",
+          section: "Монстры и сложность",
+          category: "Монстры и сложность",
+          refine: false,
+          whatItDoes: "Усиливает врагов: снаряжение и новое поведение, сложность может расти. Зависит от настроек сервера.",
+          howToStart: "Не ходите далеко без брони и еды; сверьтесь с настройками сервера и /za.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Hostile Tactics",
+          section: "Монстры и сложность",
+          category: "Монстры и сложность",
+          refine: false,
+          whatItDoes: "Делает обычных враждебных мобов умнее, а не просто сильнее. Работает на сервере.",
+          howToStart: "Не ходите далеко без брони и еды; учитывайте тактику мобов в бою.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "No Creeper Explosion",
+          section: "Монстры и сложность",
+          category: "Монстры и сложность",
+          refine: true,
+          whatItDoes: "Меняет взрывы криперов: судя по названию, отключает их. Проверьте, остаётся ли урон игрокам (уточнить).",
+          howToStart: "Проверьте в игре, остаётся ли урон игрокам, и не ходите в опасные места без брони.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+
+        // Животные и питомцы
+        {
+          name: "Alex's Mobs",
+          section: "Животные и питомцы",
+          category: "Животные и питомцы",
+          refine: false,
+          whatItDoes: "Много существ, от мирных до опасных; у многих своя польза и свой способ приручения.",
+          howToStart: "Встречайте существ в биомах, проверяйте способы приручения и их пользу.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Naturalist",
+          section: "Животные и питомцы",
+          category: "Животные и питомцы",
+          refine: false,
+          whatItDoes: "Реалистичные дикие животные и насекомые.",
+          howToStart: "Изучайте диких животных и насекомых в мире.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Tameable Foxes",
+          section: "Животные и питомцы",
+          category: "Животные и питомцы",
+          refine: false,
+          whatItDoes: "Лис можно полноценно приручать.",
+          howToStart: "Приручите лису и защитите её бронёй или ошейником.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Domestication Innovation: Redomesticate",
+          section: "Животные и питомцы",
+          category: "Животные и питомцы",
+          refine: false,
+          whatItDoes: "Расширяет уход за питомцами: ошейники с зачарованиями, лежанки и другая забота.",
+          howToStart: "Сделайте лежанку и ошейник с чарами для питомцев.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Critter Armory",
+          section: "Животные и питомцы",
+          category: "Животные и питомцы",
+          refine: false,
+          whatItDoes: "Броня для лошадей, волков, котов, кур, коров, свиней и других.",
+          howToStart: "Скрафтите подходящую броню через JEI и наденьте на питомца.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Angel Collars",
+          section: "Животные и питомцы",
+          category: "Животные и питомцы",
+          refine: true,
+          whatItDoes: "Особые ошейники для питомцев; эффект (уточнить).",
+          howToStart: "Найдите ошейник в JEI и проверьте его эффект в игре.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Foxes Stuff (foxesstuff)",
+          section: "Животные и питомцы",
+          category: "Животные и питомцы",
+          refine: true,
+          whatItDoes: "Содержимое по названию точно определить нельзя (уточнить).",
+          howToStart: "Проверьте предметы мода в JEI.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+
+        // Еда и фермерство
+        {
+          name: "Farmer's Delight",
+          section: "Еда и фермерство",
+          category: "Еда и фермерство",
+          refine: false,
+          whatItDoes: "Основа: новые культуры, ножи, доска, плита, кастрюля, сытные блюда с эффектами. Есть фанатская вики.",
+          howToStart: "Начните с ножа, разделочной доски и кастрюли из Farmer's Delight.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Extra Delight",
+          section: "Еда и фермерство",
+          category: "Еда и фермерство",
+          refine: false,
+          whatItDoes: "Много новых рецептов и кухонных приборов.",
+          howToStart: "Смотрите рецепты и приборы в JEI после основ Farmer's Delight.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "More Delight",
+          section: "Еда и фермерство",
+          category: "Еда и фермерство",
+          refine: false,
+          whatItDoes: "Дополнительные блюда.",
+          howToStart: "Проверьте новые рецепты в JEI и готовьте на кухне.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Storage Delight",
+          section: "Еда и фермерство",
+          category: "Еда и фермерство",
+          refine: false,
+          whatItDoes: "Кухонные шкафы и хранение в стиле Farmer's Delight.",
+          howToStart: "Используйте кухонные шкафы для хранения продуктов и утвари.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Ars Delight",
+          section: "Еда и фермерство",
+          category: "Еда и фермерство",
+          refine: false,
+          whatItDoes: "Еда на магических ингредиентах Ars Nouveau.",
+          howToStart: "Соедините ингредиенты Ars Nouveau и готовку Farmer's Delight через JEI.",
+          wikiLabel: "arsnouveau.wiki",
+          wikiUrl: "https://arsnouveau.wiki/"
+        },
+        {
+          name: "Let's Do: Vinery",
+          section: "Еда и фермерство",
+          category: "Еда и фермерство",
+          refine: false,
+          whatItDoes: "Виноградники, бочки, вино.",
+          howToStart: "Посадите виноград и освойте бочки и производство вина.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Hands-On Delight",
+          section: "Еда и фермерство",
+          category: "Еда и фермерство",
+          refine: false,
+          whatItDoes: "Готовка «руками»: камера подлетает к посуде, вы режете, мешаете и переворачиваете без меню.",
+          howToStart: "Взаимодействуйте с посудой напрямую в мире.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "AppleSkin",
+          section: "Еда и фермерство",
+          category: "Еда и фермерство",
+          refine: false,
+          whatItDoes: "Показывает, сколько голода и насыщения даст еда.",
+          howToStart: "Наведите курсор на еду в инвентаре или возьмите её в руку.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+
+        // Оружие, снаряжение, инвентарь
+        {
+          name: "TaCZ (Timeless and Classics Zero)",
+          section: "Оружие, снаряжение, инвентарь",
+          category: "Оружие, снаряжение, инвентарь",
+          refine: false,
+          whatItDoes: "Огнестрельное оружие, патроны и обвесы.",
+          howToStart: "Крафт на оружейном столе. Патроны нужны отдельно.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "TaCZ Addon (taczaddon)",
+          section: "Оружие, снаряжение, инвентарь",
+          category: "Оружие, снаряжение, инвентарь",
+          refine: true,
+          whatItDoes: "Дополнительные возможности к TaCZ (уточнить).",
+          howToStart: "Проверьте предметы через JEI после знакомства с TaCZ.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Sword Throw",
+          section: "Оружие, снаряжение, инвентарь",
+          category: "Оружие, снаряжение, инвентарь",
+          refine: false,
+          whatItDoes: "Мечи можно метать.",
+          howToStart: "Проверьте клавишу метания в настройках управления (учитывая возможную смену клавиш в сборке).",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Curios API",
+          section: "Оружие, снаряжение, инвентарь",
+          category: "Оружие, снаряжение, инвентарь",
+          refine: false,
+          whatItDoes: "Отдельные слоты для колец, амулетов и артефактов.",
+          howToStart: "Ищите кнопку около инвентаря.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Traveler's Backpack",
+          section: "Оружие, снаряжение, инвентарь",
+          category: "Оружие, снаряжение, инвентарь",
+          refine: false,
+          whatItDoes: "Рюкзаки с хранилищем, жидкостями и улучшениями.",
+          howToStart: "Скрафтите рюкзак и берите в походы за ресурсами и припасами.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Inventory Expanded",
+          section: "Оружие, снаряжение, инвентарь",
+          category: "Оружие, снаряжение, инвентарь",
+          refine: false,
+          whatItDoes: "Перерабатывает инвентарь",
+          howToStart: "Откройте инвентарь и изучите новые слоты и кнопки.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Corpse",
+          section: "Оружие, снаряжение, инвентарь",
+          category: "Оружие, снаряжение, инвентарь",
+          refine: false,
+          whatItDoes: "После смерти вещи остаются в «теле»: вернитесь и заберите.",
+          howToStart: "Запомните или отметьте точку смерти и вернитесь забрать вещи из тела.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Corpse x Curios Compat",
+          section: "Оружие, снаряжение, инвентарь",
+          category: "Оружие, снаряжение, инвентарь",
+          refine: false,
+          whatItDoes: "Сохраняет работу аксессуаров из слотов Curios вместе с телом.",
+          howToStart: "Работает вместе с Corpse и Curios API.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Range Strains (rangestrains)",
+          section: "Оружие, снаряжение, инвентарь",
+          category: "Оружие, снаряжение, инвентарь",
+          refine: true,
+          whatItDoes: "Назначение не подтвердилось (уточнить).",
+          howToStart: "Проверьте предметы или настройки мода в игре.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+
+        // Строительство и декор
+        {
+          name: "Supplementaries",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Полезные и декоративные предметы: банки, верёвки, таблички, механизмы, пушка.",
+          howToStart: "Ищите предметы в JEI и используйте для декора и быта.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Supplementaries Squared",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Дополнение с новыми вариантами блоков.",
+          howToStart: "Смотрите новые варианты блоков в JEI.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Amendments",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Улучшает ванильные блоки: котлы, фонари, таблички и др.",
+          howToStart: "Проверьте привычные блоки (котлы, фонари, таблички) в мире и через JEI.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Quark",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Много небольших улучшений «в духе ванили»: блоки, механики, удобства.",
+          howToStart: "Изучайте новые блоки и механики в игре и через JEI.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "MrCrayfish's Refurbished Furniture",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Мебель с функциями: кухня, электричество, почта и др.",
+          howToStart: "Скрафтите мебель через JEI и опробуйте функции на базе.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Hands-On Furniture",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Холодильники и шкафы MrCrayfish открываются прямо в мире, еду можно раскладывать на полки.",
+          howToStart: "Откройте холодильник или шкаф прямо в мире и раскладывайте еду на полки.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Hands-On Vanilla",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Верстак и печь открываются на самом блоке, без обычного меню. Каждую из этих двух станций можно отключить в настройках.",
+          howToStart: "Кликните по верстаку или печи прямо в мире.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Macaw's Furniture",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Мебель из разных пород дерева.",
+          howToStart: "Подберите породу дерева и скрафтите мебель для дома.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Let's Do: Furniture",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Ещё один набор мебели и декора.",
+          howToStart: "Смотрите предметы в JEI и оформляйте постройки.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "SecurityCraft",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Защита базы: кодовые замки, ключ-карты, усиленные блоки, камеры, мины.",
+          howToStart: "С минами осторожно, договоритесь о правилах.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Orva Alarms and Sirens",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: false,
+          whatItDoes: "Сирены и сигнализации, в основном для атмосферы и ролевой игры.",
+          howToStart: "Установите сигнализацию или сирену для атмосферы или ролевой игры.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Placeable Calendar",
+          section: "Строительство и декор",
+          category: "Строительство и декор",
+          refine: true,
+          whatItDoes: "Календарь, который ставится как блок (уточнить, что он показывает).",
+          howToStart: "Поставьте блок календаря и проверьте, что он отображает.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+
+        // Жизнь на сервере и удобства
+        {
+          name: "Plasmo Voice",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Голосовой чат по расстоянию: слышно тех, кто рядом.",
+          howToStart: "Настройте голосовой чат (по умолчанию клавиша V; в нашей сборке может быть изменена).",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "PV Addon: Sound Physics",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Эхо и приглушение голоса стенами.",
+          howToStart: "Работает автоматически вместе с Plasmo Voice.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "PV Addon: Spectator",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Настраивает голосовой чат для наблюдателей.",
+          howToStart: "Действует в режиме наблюдателя.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "PV Addon: Walkie-Talkie",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Рации для связи на расстоянии.",
+          howToStart: "Скрафтите рации через JEI и используйте для связи вдали друг от друга.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Talking Heads",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: true,
+          whatItDoes: "Визуальное оформление разговора: головы игроков (уточнить).",
+          howToStart: "Проверьте в игре при разговоре с другими игроками.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Waystones",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Камни телепортации между активированными точками.",
+          howToStart: "Найдите камень телепортации (Waystone) и кликните по нему, чтобы активировать.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Comforts",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Спальники (сон без смены точки возрождения) и гамаки (сон днём).",
+          howToStart: "Берите спальник в походы, чтобы не сбивать точку возрождения, и используйте гамак днём.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Better Days",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Настраивает длину дня и ночи и ускорение времени во сне.",
+          howToStart: "Работает по настройкам сервера при смене суток и во сне.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "One Sleep Timelapse",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: true,
+          whatItDoes: "По названию, ускоряет ночь, когда спит один игрок (уточнить).",
+          howToStart: "Лягте спать и проверьте, ускоряется ли ночь при одном спящем игроке.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Economics",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: true,
+          whatItDoes: "Экономика сервера; команды и магазины зависят от версии (уточнить).",
+          howToStart: "Уточните доступные команды и правила экономики у администратора.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Villager Trading Plus",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: true,
+          whatItDoes: "Улучшает торговлю с жителями; детали (уточнить).",
+          howToStart: "Откройте окно торговли с жителем и посмотрите доступные улучшения.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "W0rld's Passports",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: true,
+          whatItDoes: "Паспорта в духе игры Papers, Please: можно заполнить свой и принять или отклонить чужой. Не забывайте нажимать Save.",
+          howToStart: "Заполните паспорт и обязательно нажмите Save.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "DashBoardAdmin",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Панель управления сервером для админов: игроки, мир, роли и права.",
+          howToStart: "Используется администратором сервера.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "SkinRestorer",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Возвращает и меняет скины на сервере (команда /skin).",
+          howToStart: "Введите команду /skin в игре.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "BlueMap",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Трёхмерная карта мира в браузере. Ссылку даёт админ.",
+          howToStart: "Запросите ссылку на карту у администратора и откройте её в браузере.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Xaero's Minimap",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Миникарта и точки (waypoints).",
+          howToStart: "Ставьте метки на миникарте (клавиши уточняйте в настройках управления, так как они могут быть изменены).",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "JEI",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Справочник предметов и рецептов (R и U).",
+          howToStart: "Откройте инвентарь. Справа список предметов JEI: наведите на предмет и нажмите R (как сделать) или U (где используется).",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Jade",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Подсказка о блоке или мобе под прицелом.",
+          howToStart: "Наведите прицел на любой блок или моба: Jade сверху покажет, что это.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Controlling",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Поиск в настройках клавиш, помогает найти конфликты.",
+          howToStart: "Загляните в настройки управления и воспользуйтесь поиском Controlling.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "ClickThrough Plus",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Позволяет кликать сквозь таблички и рамки по сундуку за ними.",
+          howToStart: "Кликайте по сундуку прямо сквозь висящую табличку или рамку.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "TreeChop",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Дерево рубится и падает целиком.",
+          howToStart: "Срубите нижний блок дерева топором.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Just Zoom",
+          section: "Жизнь на сервере и удобства",
+          category: "Жизнь на сервере и удобства",
+          refine: false,
+          whatItDoes: "Приближение камеры по клавише.",
+          howToStart: "Нажмите клавишу приближения (проверьте её в настройках управления).",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+
+        // Атмосфера: графика, звук, анимации
+        {
+          name: "Distant Horizons",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Показывает очень далёкий рельеф в упрощённом виде.",
+          howToStart: "Если FPS низкий, сначала отключите шейдеры и уменьшите дальность Distant Horizons.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Iris",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Шейдеры.",
+          howToStart: "Если FPS низкий, сначала отключите шейдеры.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Iris Shader Folder",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Удобная работа с папкой шейдеров.",
+          howToStart: "Откройте меню шейдеров Iris для быстрого доступа к папке.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "IrisSearch",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Поиск в меню Iris.",
+          howToStart: "Воспользуйтесь поиском в меню настроек шейдеров Iris.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Iris Flywheel Compat",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Совместимость шейдеров с отрисовкой механизмов Create.",
+          howToStart: "Работает автоматически при включённых шейдерах и механизмах Create.",
+          wikiLabel: "wiki.createmod.net",
+          wikiUrl: "https://wiki.createmod.net/"
+        },
+        {
+          name: "AmbientSounds",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Звуки окружающей среды.",
+          howToStart: "Работает автоматически в игре.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Sound Physics Remastered",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Реалистичное эхо и заглушение звуков.",
+          howToStart: "Слышно в пещерах, за стенами и в помещениях.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Not Enough Animations",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Дополнительные анимации игрока и предметов.",
+          howToStart: "Работает автоматически.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Ragdoll Deaths",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Тела падают по физике «тряпичной куклы».",
+          howToStart: "Проявляется при падении тел после гибели существ.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Simple Blood",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Эффекты крови.",
+          howToStart: "Появляются при уроне и боях.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Bloody Particles",
+          section: "Атмосфера: графика, звук, анимации",
+          category: "Атмосфера и графика",
+          refine: false,
+          whatItDoes: "Кровавые частицы при уроне.",
+          howToStart: "Появляются при нанесении или получении урона.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+
+        // Технические моды и библиотеки
+        {
+          name: "Оптимизация: Sodium, ImmediatelyFast, Entity Culling, More Culling",
+          section: "Технические моды и библиотеки",
+          category: "Технические и библиотеки",
+          refine: false,
+          whatItDoes: "Повышают FPS.",
+          howToStart: "Игроку эти моды изучать не нужно. Не удаляйте их.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Оптимизация: Lithium",
+          section: "Технические моды и библиотеки",
+          category: "Технические и библиотеки",
+          refine: false,
+          whatItDoes: "Ускоряет игровую логику.",
+          howToStart: "Игроку эти моды изучать не нужно. Не удаляйте их.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Оптимизация: FerriteCore, ModernFix, BadOptimizations",
+          section: "Технические моды и библиотеки",
+          category: "Технические и библиотеки",
+          refine: false,
+          whatItDoes: "Память, загрузка и производительность.",
+          howToStart: "Игроку эти моды изучать не нужно. Не удаляйте их.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Оптимизация: Dynamic FPS",
+          section: "Технические моды и библиотеки",
+          category: "Технические и библиотеки",
+          refine: false,
+          whatItDoes: "Снижает нагрузку, когда окно игры неактивно.",
+          howToStart: "Игроку эти моды изучать не нужно. Не удаляйте их.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Диагностика: spark",
+          section: "Технические моды и библиотеки",
+          category: "Технические и библиотеки",
+          refine: false,
+          whatItDoes: "Для админа: помогает найти причину лагов.",
+          howToStart: "Игроку изучать не нужно. Не удаляйте.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Библиотеки — Общие основы (Architectury, Balm, Kotlin for Forge, Forgified Fabric API, Resourceful Lib, Common Storage Lib, Platform, CreativeCore, Konkrete, GabouLibs, Seamless API, CodxLib, Baguette Lib, TenshiLib, Quantified API)",
+          section: "Технические моды и библиотеки",
+          category: "Технические и библиотеки",
+          refine: true,
+          whatItDoes: "Библиотеки общих основ для работы других модов (Quantified API отмечен как «уточнить»).",
+          howToStart: "Игроку эти моды изучать не нужно. Не удаляйте их: без библиотек другие моды не запустятся.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Библиотеки — Настройки и меню (Cloth Config, YACL, Fzzy Config, Resourceful Config, mezz_config, Searchables, libIPN)",
+          section: "Технические моды и библиотеки",
+          category: "Технические и библиотеки",
+          refine: false,
+          whatItDoes: "Обеспечивают работу конфигураций, настроек и меню.",
+          howToStart: "Игроку эти моды изучать не нужно. Не удаляйте их: без библиотек другие моды не запустятся.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Библиотеки — Анимации, эффекты, ИИ, магия, еда, декор и Hands-On (GeckoLib, AzureLib, Player Animation Lib, Lodestone, SmartBrainLib, Iron's Lib, Ace's Spell Utils, Modonomicon, OctoLib, DelightLib, Let's Do: Foundation, Moonlight, Zeta, Framework, GlitchCore, Lithostitched, Diegesis)",
+          section: "Технические моды и библиотеки",
+          category: "Технические и библиотеки",
+          refine: false,
+          whatItDoes: "Служебные библиотеки для анимаций, эффектов, ИИ мобов, магии, кулинарии, декора, сезонов и блоков Hands-On.",
+          howToStart: "Игроку эти моды изучать не нужно. Не удаляйте их: без библиотек другие моды не запустятся.",
+          wikiLabel: "Minecraft Wiki",
+          wikiUrl: "https://minecraft.wiki/"
+        },
+        {
+          name: "Russian Army Uniforms (dtrchneo-1.0.6-neoforge-1.21.1.jar)",
+          section: "Оружие, снаряжение, инвентарь",
+          category: "Оружие, снаряжение и инвентарь",
+          refine: false,
+          whatItDoes: "Набор военной униформы и снаряжения (в том числе в стиле российской армии) для мира и сервера.",
+          howToStart: "Смотрите предметы и комплекты униформы через JEI или в инвентаре.",
+          wikiLabel: "CurseForge",
+          wikiUrl: "https://www.curseforge.com/minecraft/mc-mods/russian-army-uniforms"
+        }
+      ];
+
+      const ROLES_DATA = [
+        {
+          title: "Маг",
+          focus: "Заклинания, ритуалы, духи",
+          mods: "Ars Nouveau, Iron's Spells, Occultism, Malum"
+        },
+        {
+          title: "Инженер",
+          focus: "Заводы, поезда, корабли, космос",
+          mods: "Create, Eureka, Ad Astra"
+        },
+        {
+          title: "Повар и фермер",
+          focus: "Урожай, еда, напитки",
+          mods: "Farmer's Delight, Vinery"
+        },
+        {
+          title: "Следопыт и Исследователь миров",
+          focus: "Данжи, боссы, лут, оружие",
+          mods: "Twilight Forest, When Dungeons Arise, TaCZ"
+        },
+        {
+          title: "Боец и Снабженец",
+          focus: "Оборона, рейды, экипировка и припасы",
+          mods: "Born in Chaos, Zombie Apocalypse Addon, SecurityCraft, Traveler's Backpack"
+        },
+        {
+          title: "Строитель",
+          focus: "Дом, мебель, декор",
+          mods: "Supplementaries, Quark, моды на мебель"
+        }
+      ];
+
+      const FIRST_DAY_STEPS = [
+        "Откройте инвентарь. Справа список предметов JEI: наведите на предмет и нажмите R (как сделать) или U (где используется).",
+        "Наведите прицел на любой блок или моба: Jade сверху покажет, что это.",
+        "Загляните в настройки управления. Клавиш от модов много, а поиск там добавляет Controlling.",
+        "Сделайте дом, кровать или спальник и еду. Ночью и даже днём бывает опасно из-за зомби-аддона.",
+        "Найдите камень телепортации (Waystone) и кликните по нему, чтобы активировать.",
+        "Настройте голосовой чат Plasmo Voice (по умолчанию клавиша V)."
+      ];
+
+      const FAQ_ITEMS = [
+        {
+          q: "Умер, где вещи?",
+          a: "После смерти вещи остаются в «теле» (мод Corpse): вернитесь и заберите. Дополнительно Corpse x Curios Compat сохраняет работу аксессуаров из слотов Curios вместе с телом."
+        },
+        {
+          q: "Как телепортироваться?",
+          a: "Найдите камень телепортации (Waystones) и кликните по нему, чтобы активировать. Телепортация работает между активированными точками."
+        },
+        {
+          q: "Что делать, если стало слишком сложно?",
+          a: "Идти по всему сразу не нужно: выберите одно занятие и разделите роли с друзьями, а в опасные походы берите броню и еду. Если друзьям тяжело, администратор с правами оператора может проверить состояние через /za и применить пресет /za preset casual (сверьтесь с /za)."
+        }
+      ];
+
+      const ADMIN_CORE_PILLARS = [
+        { icon: "⚡", title: "Поддерживать сервер" },
+        { icon: "❤️", title: "Любить своих игроков" },
+        { icon: "🎉", title: "Получать удовольствие" }
+      ];
+
+      const ADMIN_TECH_NOTES = [];
+
+      const CATEGORIES = [
+        "Все",
+        "Магия",
+        "Техника, корабли и поезда",
+        "Мир и сезоны",
+        "Монстры и сложность",
+        "Животные и питомцы",
+        "Еда и фермерство",
+        "Оружие, снаряжение, инвентарь",
+        "Строительство и декор",
+        "Жизнь на сервере и удобства",
+        "Атмосфера и графика",
+        "Технические и библиотеки"
+      ];
+
+      const state = {
+        mode: "players", // "players" | "admin"
+        search: "",
+        selectedCategory: "Все",
+        onlyRefine: false
+      };
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function getFilteredItems() {
+        const q = state.search.trim().toLowerCase();
+        return MOD_ITEMS.filter(function (item) {
+          const matchesCat = state.selectedCategory === "Все" || item.category === state.selectedCategory;
+          const matchesRefine = !state.onlyRefine || item.refine;
+          const matchesQuery =
+            !q ||
+            item.name.toLowerCase().includes(q) ||
+            item.section.toLowerCase().includes(q) ||
+            item.category.toLowerCase().includes(q) ||
+            item.whatItDoes.toLowerCase().includes(q) ||
+            item.howToStart.toLowerCase().includes(q);
+          return matchesCat && matchesRefine && matchesQuery;
+        });
+      }
+
+      function renderAdminView() {
+        const pillarsHtml = ADMIN_CORE_PILLARS.map(function (p) {
+          return (
+            '<div class="rounded-xl bg-[#0c0517]/85 border border-orange-400/35 p-4 flex items-center gap-3">' +
+            '<span class="text-xl shrink-0">' +
+            escapeHtml(p.icon) +
+            "</span>" +
+            '<span class="font-bold text-sm sm:text-base text-orange-200">' +
+            escapeHtml(p.title) +
+            "</span>" +
+            "</div>"
+          );
+        }).join("");
+
+        const notesHtml = ADMIN_TECH_NOTES.map(function (n) {
+          return (
+            '<div class="rounded-xl bg-[#120722] border border-[#2b144d] p-4 space-y-1.5">' +
+            '<h3 class="font-bold text-sm text-fuchsia-300">' +
+            escapeHtml(n.title) +
+            "</h3>" +
+            '<p class="text-xs sm:text-sm text-slate-300/90 leading-relaxed">' +
+            escapeHtml(n.text) +
+            "</p>" +
+            "</div>"
+          );
+        }).join("");
+
+        return (
+          '<section class="neon-card-orange rounded-2xl p-5 sm:p-6 space-y-4">' +
+          '<div class="flex flex-wrap items-center justify-between gap-2">' +
+          '<div class="flex items-center gap-2">' +
+          '<span class="text-xl">🛠️</span>' +
+          '<h2 class="text-lg sm:text-xl font-bold text-orange-300">Заметки для администратора</h2>' +
+          "</div>" +
+          '<span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-[#0c0517]/80 text-orange-200 border border-orange-400/35">Отдельный режим админа</span>' +
+          "</div>" +
+          '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' +
+          pillarsHtml +
+          "</div>" +
+          '<div class="space-y-3 pt-1">' +
+          notesHtml +
+          "</div>" +
+          "</section>"
+        );
+      }
+
+      function renderPlayersView() {
+        const filteredItems = getFilteredItems();
+        const totalCards = MOD_ITEMS.length;
+
+        const categoryButtonsHtml = CATEGORIES.map(function (cat) {
+          const active = state.selectedCategory === cat;
+          const cls = active
+            ? "neon-active-btn"
+            : "bg-[#120722] text-slate-300 border border-[#2b144d] hover:border-fuchsia-500/50 hover:text-white";
+          return (
+            '<button type="button" data-cat="' +
+            escapeHtml(cat) +
+            '" class="cat-btn shrink-0 whitespace-nowrap px-3.5 py-2 rounded-xl text-xs font-semibold transition ' +
+            cls +
+            '">' +
+            escapeHtml(cat) +
+            "</button>"
+          );
+        }).join("");
+
+        const cardsHtml =
+          filteredItems.length === 0
+            ? '<div class="neon-card rounded-2xl p-6 text-center text-sm text-slate-400">По выбранным фильтрам ничего не найдено. Нажмите «Сброс», чтобы вернуть все моды.</div>'
+            : '<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">' +
+              filteredItems
+                .map(function (item) {
+                  const statusBadge = item.refine
+                    ? '<span class="shrink-0 whitespace-nowrap text-[11px] font-semibold px-2.5 py-0.5 rounded-lg bg-orange-500/20 text-orange-300 border border-orange-400/40">уточнить</span>'
+                    : '<span class="shrink-0 whitespace-nowrap text-[11px] font-semibold px-2.5 py-0.5 rounded-lg bg-[#0c0517] text-fuchsia-300 border border-[#2b144d]">проверено по описанию</span>';
+
+                  return (
+                    '<article class="neon-card rounded-2xl p-4 flex flex-col justify-between gap-3">' +
+                    '<div class="space-y-2.5">' +
+                    '<div class="flex items-start justify-between gap-2">' +
+                    '<h3 class="font-bold text-base text-fuchsia-300">' +
+                    escapeHtml(item.name) +
+                    "</h3>" +
+                    statusBadge +
+                    "</div>" +
+                    '<div class="text-[11px] font-medium text-purple-300/90">' +
+                    "Раздел / категория: <span class=\"text-slate-200\">" +
+                    escapeHtml(item.section) +
+                    "</span>" +
+                    (item.category !== item.section
+                      ? ' <span class="text-slate-400">• ' + escapeHtml(item.category) + "</span>"
+                      : "") +
+                    "</div>" +
+                    '<div class="text-xs text-slate-200/95 leading-relaxed"><strong class="text-fuchsia-200">Что делает:</strong> ' +
+                    escapeHtml(item.whatItDoes) +
+                    "</div>" +
+                    '<div class="text-xs text-slate-300/90 leading-relaxed"><strong class="text-orange-300">С чего начать / как пользоваться:</strong> ' +
+                    escapeHtml(item.howToStart) +
+                    "</div>" +
+                    "</div>" +
+                    '<div class="pt-2 border-t border-[#2b144d] flex items-center justify-between gap-2 text-[11px]">' +
+                    '<span class="text-slate-400">Ссылка на вики:</span>' +
+                    '<a href="' +
+                    escapeHtml(item.wikiUrl) +
+                    '" target="_blank" rel="noopener noreferrer" class="text-fuchsia-300 underline decoration-fuchsia-400/60 hover:text-orange-300">' +
+                    escapeHtml(item.wikiLabel) +
+                    "</a>" +
+                    "</div>" +
+                    "</article>"
+                  );
+                })
+                .join("") +
+              "</div>";
+
+        const rolesHtml = ROLES_DATA.map(function (role) {
+          return (
+            '<div class="rounded-xl bg-[#120722] border border-[#2b144d] p-4 space-y-2">' +
+            '<div class="inline-block text-[11px] font-semibold px-2 py-0.5 rounded bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30">' +
+            escapeHtml(role.focus) +
+            "</div>" +
+            '<h3 class="font-bold text-sm text-slate-100">' +
+            escapeHtml(role.title) +
+            "</h3>" +
+            '<p class="text-[11px] text-orange-300/90 pt-1 border-t border-[#2b144d]"><strong>Главные моды:</strong> ' +
+            escapeHtml(role.mods) +
+            "</p>" +
+            "</div>"
+          );
+        }).join("");
+
+        const stepsHtml = FIRST_DAY_STEPS.map(function (step, idx) {
+          return (
+            '<li class="flex items-start gap-3 rounded-xl bg-[#120722] border border-[#2b144d] p-3 text-xs sm:text-sm text-slate-200">' +
+            '<span class="shrink-0 w-6 h-6 rounded-lg bg-gradient-to-br from-fuchsia-500 to-orange-500 text-white font-bold text-xs flex items-center justify-center">' +
+            String(idx + 1) +
+            "</span>" +
+            '<span class="leading-relaxed">' +
+            escapeHtml(step) +
+            "</span>" +
+            "</li>"
+          );
+        }).join("");
+
+        const faqHtml = FAQ_ITEMS.map(function (item) {
+          return (
+            '<div class="rounded-xl bg-[#120722] border border-[#2b144d] p-3.5 space-y-1">' +
+            '<div class="font-semibold text-sm text-fuchsia-300">' +
+            escapeHtml(item.q) +
+            "</div>" +
+            '<div class="text-xs text-slate-300/90 leading-relaxed">' +
+            escapeHtml(item.a) +
+            "</div>" +
+            "</div>"
+          );
+        }).join("");
+
+        const refineCls = state.onlyRefine
+          ? "bg-orange-500/25 border-orange-400 text-orange-200"
+          : "bg-[#120722] border-[#2b144d] text-amber-300 hover:border-orange-500/50";
+
+        return (
+          '<section class="neon-card rounded-2xl p-4 space-y-3">' +
+          '<input id="search-input" type="text" value="' +
+          escapeHtml(state.search) +
+          '" placeholder="Поиск по моду, разделу, действию, ролям и подсказкам..." class="w-full rounded-xl bg-[#0c0517] border border-[#2b144d] px-4 py-2.5 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-fuchsia-500" />' +
+          '<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">' +
+          categoryButtonsHtml +
+          '<button id="reset-btn" type="button" title="Сбросить фильтры" class="shrink-0 whitespace-nowrap px-3 py-2 rounded-xl text-xs font-semibold bg-[#120722] text-orange-300 border border-orange-500/40 hover:bg-orange-500/15 transition">🧭 Сброс</button>' +
+          '<button id="refine-btn" type="button" class="shrink-0 whitespace-nowrap px-3.5 py-2 rounded-xl text-xs font-semibold border transition ' +
+          refineCls +
+          '">Только «уточнить»</button>' +
+          "</div>" +
+          '<div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-400">' +
+          '<span>Показано карточек: <strong class="text-slate-200">' +
+          String(filteredItems.length) +
+          "</strong> из <strong class=\"text-slate-200\">" +
+          String(totalCards) +
+          "</strong> записей гайда</span>" +
+          '<span>Всего файлов в сборке: <strong class="text-fuchsia-300">' +
+          String(TOTAL_MODS_COUNT) +
+          "</strong> (клиент и сервер)</span>" +
+          "</div>" +
+          "</section>" +
+          '<section class="space-y-3">' +
+          '<div class="flex flex-wrap items-baseline justify-between gap-2">' +
+          '<h2 class="text-lg sm:text-xl font-bold text-slate-100">📦 Моды сборки</h2>' +
+          '<span class="text-xs text-slate-400">' +
+          String(filteredItems.length) +
+          " карточек в выборке • часть карточек групповая/библиотечная из " +
+          String(TOTAL_MODS_COUNT) +
+          " файлов сборки</span>" +
+          "</div>" +
+          cardsHtml +
+          "</section>" +
+          '<section class="neon-card rounded-2xl p-5 space-y-3.5">' +
+          '<h2 class="text-lg font-bold text-slate-100">👥 Роли в команде</h2>' +
+          '<p class="text-xs text-slate-300/90">Идти по всему сразу не нужно: выберите одно занятие, а с друзьями разделите роли.</p>' +
+          '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">' +
+          rolesHtml +
+          "</div>" +
+          "</section>" +
+          '<section class="neon-card rounded-2xl p-5 space-y-3">' +
+          '<h2 class="text-lg font-bold text-slate-100">🧭 Первый день новичка</h2>' +
+          '<ol class="space-y-2">' +
+          stepsHtml +
+          "</ol>" +
+          "</section>" +
+          '<section class="neon-card rounded-2xl p-5 space-y-3">' +
+          '<h2 class="text-lg font-bold text-slate-100">❓ Частые вопросы</h2>' +
+          '<div class="space-y-2.5">' +
+          faqHtml +
+          "</div>" +
+          "</section>"
+        );
+      }
+
+      function render() {
+        const root = document.getElementById("app");
+        if (!root) return;
+
+        const playersTabCls =
+          state.mode === "players"
+            ? "neon-active-btn"
+            : "bg-[#120722] text-slate-300 border border-[#2b144d] hover:border-fuchsia-500/50 hover:text-white";
+
+        const adminTabCls =
+          state.mode === "admin"
+            ? "bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-extrabold shadow-[0_0_16px_rgba(255,107,0,0.45)]"
+            : "bg-[#120722] text-orange-300 border border-orange-500/35 hover:bg-orange-500/15";
+
+        const bodyContent = state.mode === "admin" ? renderAdminView() : renderPlayersView();
+
+        root.innerHTML =
+          '<header class="neon-card rounded-2xl p-6 text-center space-y-3">' +
+          '<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30">' +
+          "<span>NeoForge 1.21.1</span><span>•</span><span>" +
+          String(TOTAL_MODS_COUNT) +
+          " файлов (клиент и сервер)</span><span>•</span><span>" +
+          String(MOD_ITEMS.length) +
+          " карточек</span></div>" +
+          '<h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-fuchsia-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">Гайд по нашей сборке Minecraft (NeoForge 1.21.1)</h1>' +
+          '<p class="text-sm text-slate-300/90 max-w-2xl mx-auto leading-relaxed">Это большое приключенческое выживание для компании: магия, механизмы, корабли, новые миры, опасные монстры, кухня и стройка. Идти по всему сразу не нужно: выберите одно занятие, а с друзьями разделите роли.</p>' +
+          '<p class="text-[11px] text-slate-400 max-w-2xl mx-auto leading-relaxed">Клавиши указаны стандартные, в нашей сборке они могут быть изменены. Известные моды описаны по общим знаниям о них, и в вашей версии детали могут отличаться. Редкие моды по возможности проверены в интернете. Пометка (уточнить) значит, что описание не подтверждено.</p>' +
+          '<div class="pt-1 flex items-center justify-center gap-2">' +
+          '<button id="mode-players-btn" type="button" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-xs font-semibold transition ' +
+          playersTabCls +
+          '">🎮 Игрокам</button>' +
+          '<button id="mode-admin-btn" type="button" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-xs font-semibold transition ' +
+          adminTabCls +
+          '">🛠️ Админу</button>' +
+          "</div>" +
+          "</header>" +
+          bodyContent;
+
+        bindEvents();
+      }
+
+      function bindEvents() {
+        const modePlayersBtn = document.getElementById("mode-players-btn");
+        if (modePlayersBtn) {
+          modePlayersBtn.addEventListener("click", function () {
+            state.mode = "players";
+            render();
+          });
+        }
+
+        const modeAdminBtn = document.getElementById("mode-admin-btn");
+        if (modeAdminBtn) {
+          modeAdminBtn.addEventListener("click", function () {
+            state.mode = "admin";
+            render();
+          });
+        }
+
+        const searchInput = document.getElementById("search-input");
+        if (searchInput) {
+          searchInput.addEventListener("input", function (e) {
+            state.search = e.target.value;
+            render();
+            const updated = document.getElementById("search-input");
+            if (updated) {
+              updated.focus();
+              updated.setSelectionRange(updated.value.length, updated.value.length);
+            }
+          });
+        }
+
+        document.querySelectorAll(".cat-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            state.selectedCategory = btn.getAttribute("data-cat") || "Все";
+            render();
+          });
+        });
+
+        const resetBtn = document.getElementById("reset-btn");
+        if (resetBtn) {
+          resetBtn.addEventListener("click", function () {
+            state.search = "";
+            state.selectedCategory = "Все";
+            state.onlyRefine = false;
+            render();
+          });
+        }
+
+        const refineBtn = document.getElementById("refine-btn");
+        if (refineBtn) {
+          refineBtn.addEventListener("click", function () {
+            state.onlyRefine = !state.onlyRefine;
+            render();
+          });
+        }
+      }
+
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", render);
+      } else {
+        render();
+      }
+    })();
+  </script>
+</body>
+</html>
